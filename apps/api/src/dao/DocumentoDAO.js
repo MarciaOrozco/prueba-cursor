@@ -1,11 +1,11 @@
-const BaseDAO = require('./BaseDAO');
+const BaseDAO = require("./BaseDAO");
 
 /**
  * DAO para operaciones con documentos
  */
 class DocumentoDAO extends BaseDAO {
   constructor() {
-    super('documentos');
+    super("documentos");
   }
 
   /**
@@ -27,14 +27,14 @@ class DocumentoDAO extends BaseDAO {
       documentoData.nombre,
       documentoData.url,
       documentoData.tipo,
-      documentoData.tamaño
+      documentoData.tamaño,
     ];
 
     try {
       const result = await this.customQuery(query, params);
       return { id: documentoData.id, ...documentoData };
     } catch (error) {
-      console.error('Error creating documento:', error);
+      console.error("Error creating documento:", error);
       throw error;
     }
   }
@@ -61,7 +61,7 @@ class DocumentoDAO extends BaseDAO {
       const results = await this.customQuery(query, [turnoId]);
       return results.map(this.formatDocumento);
     } catch (error) {
-      console.error('Error getting turno documents:', error);
+      console.error("Error getting turno documents:", error);
       throw error;
     }
   }
@@ -71,7 +71,7 @@ class DocumentoDAO extends BaseDAO {
    */
   async obtenerDocumentosPaciente(pacienteId, options = {}) {
     const { limit = 20, offset = 0, tipo = null } = options;
-    
+
     let query = `
       SELECT 
         d.*,
@@ -84,7 +84,7 @@ class DocumentoDAO extends BaseDAO {
       LEFT JOIN nutricionistas n ON t.nutricionista_id = n.id
       WHERE d.paciente_id = ?
     `;
-    
+
     const params = [pacienteId];
 
     if (tipo) {
@@ -98,11 +98,11 @@ class DocumentoDAO extends BaseDAO {
 
     try {
       const results = await this.customQuery(query, params);
-      
+
       // Obtener total para paginación
       let countQuery = `SELECT COUNT(*) as total FROM documentos d WHERE d.paciente_id = ?`;
       const countParams = [pacienteId];
-      
+
       if (tipo) {
         countQuery += ` AND d.tipo = ?`;
         countParams.push(tipo);
@@ -118,11 +118,11 @@ class DocumentoDAO extends BaseDAO {
           limit,
           offset,
           hasNext: offset + limit < total,
-          hasPrev: offset > 0
-        }
+          hasPrev: offset > 0,
+        },
       };
     } catch (error) {
-      console.error('Error getting patient documents:', error);
+      console.error("Error getting patient documents:", error);
       throw error;
     }
   }
@@ -151,7 +151,7 @@ class DocumentoDAO extends BaseDAO {
       }
       return this.formatDocumento(results[0]);
     } catch (error) {
-      console.error('Error getting documento:', error);
+      console.error("Error getting documento:", error);
       throw error;
     }
   }
@@ -169,7 +169,7 @@ class DocumentoDAO extends BaseDAO {
       const result = await this.customQuery(query, [id, pacienteId]);
       return result.affectedRows > 0;
     } catch (error) {
-      console.error('Error deleting documento:', error);
+      console.error("Error deleting documento:", error);
       throw error;
     }
   }
@@ -187,7 +187,7 @@ class DocumentoDAO extends BaseDAO {
       const results = await this.customQuery(query, [documentoId, pacienteId]);
       return results.length > 0;
     } catch (error) {
-      console.error('Error verifying document ownership:', error);
+      console.error("Error verifying document ownership:", error);
       throw error;
     }
   }
@@ -210,7 +210,7 @@ class DocumentoDAO extends BaseDAO {
       const results = await this.customQuery(query, [pacienteId]);
       return results;
     } catch (error) {
-      console.error('Error getting document statistics:', error);
+      console.error("Error getting document statistics:", error);
       throw error;
     }
   }
@@ -229,14 +229,16 @@ class DocumentoDAO extends BaseDAO {
       tipo: documento.tipo,
       tamaño: documento.tamaño,
       fechaCarga: documento.fecha_carga,
-      turno: documento.turno_fecha ? {
-        fecha: documento.turno_fecha,
-        hora: documento.turno_hora,
-        nutricionista: {
-          nombre: documento.nutricionista_nombre,
-          apellido: documento.nutricionista_apellido
-        }
-      } : null
+      turno: documento.turno_fecha
+        ? {
+            fecha: documento.turno_fecha,
+            hora: documento.turno_hora,
+            nutricionista: {
+              nombre: documento.nutricionista_nombre,
+              apellido: documento.nutricionista_apellido,
+            },
+          }
+        : null,
     };
   }
 }

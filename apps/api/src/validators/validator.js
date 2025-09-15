@@ -1,31 +1,31 @@
-const Joi = require('joi');
+const Joi = require("joi");
 
 /**
  * Middleware de validación genérico
  */
-const validate = (schema, source = 'body') => {
+const validate = (schema, source = "body") => {
   return (req, res, next) => {
     const data = req[source];
-    
+
     const { error, value } = schema.validate(data, {
       abortEarly: false, // Mostrar todos los errores
       stripUnknown: true, // Remover campos no definidos
-      convert: true // Convertir tipos automáticamente
+      convert: true, // Convertir tipos automáticamente
     });
 
     if (error) {
       return res.status(400).json({
         error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Los datos proporcionados no son válidos',
-          details: error.details.map(detail => ({
-            field: detail.path.join('.'),
+          code: "VALIDATION_ERROR",
+          message: "Los datos proporcionados no son válidos",
+          details: error.details.map((detail) => ({
+            field: detail.path.join("."),
             message: detail.message,
-            value: detail.context?.value
-          }))
+            value: detail.context?.value,
+          })),
         },
         timestamp: new Date().toISOString(),
-        path: req.path
+        path: req.path,
       });
     }
 
@@ -39,21 +39,21 @@ const validate = (schema, source = 'body') => {
  * Middleware para validar parámetros de ruta
  */
 const validateParams = (schema) => {
-  return validate(schema, 'params');
+  return validate(schema, "params");
 };
 
 /**
  * Middleware para validar query parameters
  */
 const validateQuery = (schema) => {
-  return validate(schema, 'query');
+  return validate(schema, "query");
 };
 
 /**
  * Middleware para validar body del request
  */
 const validateBody = (schema) => {
-  return validate(schema, 'body');
+  return validate(schema, "body");
 };
 
 /**
@@ -62,11 +62,15 @@ const validateBody = (schema) => {
 const validateResponse = (schema, data) => {
   const { error, value } = schema.validate(data, {
     abortEarly: false,
-    stripUnknown: true
+    stripUnknown: true,
   });
 
   if (error) {
-    throw new Error(`Response validation failed: ${error.details.map(d => d.message).join(', ')}`);
+    throw new Error(
+      `Response validation failed: ${error.details
+        .map((d) => d.message)
+        .join(", ")}`
+    );
   }
 
   return value;
@@ -80,39 +84,44 @@ const validateFile = (options = {}) => {
     if (!req.file) {
       return res.status(400).json({
         error: {
-          code: 'MISSING_FILE',
-          message: 'Archivo requerido'
+          code: "MISSING_FILE",
+          message: "Archivo requerido",
         },
         timestamp: new Date().toISOString(),
-        path: req.path
+        path: req.path,
       });
     }
 
     // Validar tamaño
-    const maxSize = options.maxSize || parseInt(process.env.UPLOAD_MAX_SIZE) || 10485760; // 10MB
+    const maxSize =
+      options.maxSize || parseInt(process.env.UPLOAD_MAX_SIZE) || 10485760; // 10MB
     if (req.file.size > maxSize) {
       return res.status(413).json({
         error: {
-          code: 'FILE_TOO_LARGE',
-          message: `El archivo es demasiado grande. Tamaño máximo: ${maxSize} bytes`
+          code: "FILE_TOO_LARGE",
+          message: `El archivo es demasiado grande. Tamaño máximo: ${maxSize} bytes`,
         },
         timestamp: new Date().toISOString(),
-        path: req.path
+        path: req.path,
       });
     }
 
     // Validar tipo de archivo
-    const allowedTypes = options.allowedTypes || (process.env.UPLOAD_ALLOWED_TYPES || 'pdf,jpg,jpeg,png').split(',');
-    const fileExtension = req.file.originalname.split('.').pop().toLowerCase();
-    
+    const allowedTypes =
+      options.allowedTypes ||
+      (process.env.UPLOAD_ALLOWED_TYPES || "pdf,jpg,jpeg,png").split(",");
+    const fileExtension = req.file.originalname.split(".").pop().toLowerCase();
+
     if (!allowedTypes.includes(fileExtension)) {
       return res.status(400).json({
         error: {
-          code: 'INVALID_FILE_TYPE',
-          message: `Tipo de archivo no permitido. Tipos permitidos: ${allowedTypes.join(', ')}`
+          code: "INVALID_FILE_TYPE",
+          message: `Tipo de archivo no permitido. Tipos permitidos: ${allowedTypes.join(
+            ", "
+          )}`,
         },
         timestamp: new Date().toISOString(),
-        path: req.path
+        path: req.path,
       });
     }
 
@@ -126,5 +135,5 @@ module.exports = {
   validateQuery,
   validateBody,
   validateResponse,
-  validateFile
+  validateFile,
 };

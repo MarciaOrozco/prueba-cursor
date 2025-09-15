@@ -1,8 +1,8 @@
-const express = require('express');
-const TurnoController = require('../controllers/TurnoController');
-const { authMiddleware, requirePaciente } = require('../middleware/auth');
-const { validateParams, validateBody } = require('../validators/validator');
-const { turnoSchemas } = require('../validators/schemas');
+const express = require("express");
+const TurnoController = require("../controllers/TurnoController");
+const { authMiddleware, requirePaciente } = require("../middleware/auth");
+const { validateParams, validateBody } = require("../validators/validator");
+const { turnoSchemas } = require("../validators/schemas");
 
 const router = express.Router();
 const turnoController = new TurnoController();
@@ -52,7 +52,8 @@ const turnoController = new TurnoController();
  *       500:
  *         description: Error interno del servidor
  */
-router.post('/',
+router.post(
+  "/",
   authMiddleware,
   requirePaciente,
   validateBody(turnoSchemas.agendarTurno.body),
@@ -87,7 +88,8 @@ router.post('/',
  *       500:
  *         description: Error interno del servidor
  */
-router.get('/:id',
+router.get(
+  "/:id",
   authMiddleware,
   validateParams(turnoSchemas.obtenerTurno.params),
   turnoController.obtenerTurno.bind(turnoController)
@@ -137,7 +139,8 @@ router.get('/:id',
  *       500:
  *         description: Error interno del servidor
  */
-router.patch('/:id/cancelar',
+router.patch(
+  "/:id/cancelar",
   authMiddleware,
   validateParams(turnoSchemas.cancelarTurno.params),
   validateBody(turnoSchemas.cancelarTurno.body),
@@ -193,7 +196,8 @@ router.patch('/:id/cancelar',
  *       500:
  *         description: Error interno del servidor
  */
-router.patch('/:id/reprogramar',
+router.patch(
+  "/:id/reprogramar",
   authMiddleware,
   validateParams(turnoSchemas.reprogramarTurno.params),
   validateBody(turnoSchemas.reprogramarTurno.body),
@@ -223,7 +227,8 @@ router.patch('/:id/reprogramar',
  *       500:
  *         description: Error interno del servidor
  */
-router.get('/proximos',
+router.get(
+  "/proximos",
   authMiddleware,
   requirePaciente,
   turnoController.obtenerProximosTurnos.bind(turnoController)
@@ -266,7 +271,8 @@ router.get('/proximos',
  *       500:
  *         description: Error interno del servidor
  */
-router.get('/historial',
+router.get(
+  "/historial",
   authMiddleware,
   requirePaciente,
   turnoController.obtenerHistorialTurnos.bind(turnoController)

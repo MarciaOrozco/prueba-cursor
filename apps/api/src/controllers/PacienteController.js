@@ -1,5 +1,5 @@
-const PacienteDAO = require('../dao/PacienteDAO');
-const TurnoDAO = require('../dao/TurnoDAO');
+const PacienteDAO = require("../dao/PacienteDAO");
+const TurnoDAO = require("../dao/TurnoDAO");
 
 /**
  * Controlador para operaciones con pacientes
@@ -20,14 +20,14 @@ class PacienteController {
       const { estado, limit = 20, offset = 0 } = req.query;
 
       // Verificar permisos - solo el propio paciente o admin puede ver sus turnos
-      if (req.user.id !== id && req.user.tipo !== 'admin') {
+      if (req.user.id !== id && req.user.tipo !== "admin") {
         return res.status(403).json({
           error: {
-            code: 'ACCESS_DENIED',
-            message: 'No tienes permisos para ver los turnos de este paciente'
+            code: "ACCESS_DENIED",
+            message: "No tienes permisos para ver los turnos de este paciente",
           },
           timestamp: new Date().toISOString(),
-          path: req.path
+          path: req.path,
         });
       }
 
@@ -36,11 +36,11 @@ class PacienteController {
       if (!paciente) {
         return res.status(404).json({
           error: {
-            code: 'PATIENT_NOT_FOUND',
-            message: 'Paciente no encontrado'
+            code: "PATIENT_NOT_FOUND",
+            message: "Paciente no encontrado",
           },
           timestamp: new Date().toISOString(),
-          path: req.path
+          path: req.path,
         });
       }
 
@@ -51,17 +51,21 @@ class PacienteController {
 
       const options = {
         limit: parseInt(limit),
-        offset: parseInt(offset)
+        offset: parseInt(offset),
       };
 
-      const resultado = await this.turnoDAO.obtenerTurnosPaciente(id, filtros, options);
+      const resultado = await this.turnoDAO.obtenerTurnosPaciente(
+        id,
+        filtros,
+        options
+      );
 
       res.status(200).json({
         data: resultado.data,
-        pagination: resultado.pagination
+        pagination: resultado.pagination,
       });
     } catch (error) {
-      console.error('Error in obtenerTurnosPaciente:', error);
+      console.error("Error in obtenerTurnosPaciente:", error);
       next(error);
     }
   }
@@ -75,14 +79,14 @@ class PacienteController {
       const { id } = req.params;
 
       // Verificar permisos
-      if (req.user.id !== id && req.user.tipo !== 'admin') {
+      if (req.user.id !== id && req.user.tipo !== "admin") {
         return res.status(403).json({
           error: {
-            code: 'ACCESS_DENIED',
-            message: 'No tienes permisos para ver el perfil de este paciente'
+            code: "ACCESS_DENIED",
+            message: "No tienes permisos para ver el perfil de este paciente",
           },
           timestamp: new Date().toISOString(),
-          path: req.path
+          path: req.path,
         });
       }
 
@@ -90,19 +94,19 @@ class PacienteController {
       if (!paciente) {
         return res.status(404).json({
           error: {
-            code: 'PATIENT_NOT_FOUND',
-            message: 'Paciente no encontrado'
+            code: "PATIENT_NOT_FOUND",
+            message: "Paciente no encontrado",
           },
           timestamp: new Date().toISOString(),
-          path: req.path
+          path: req.path,
         });
       }
 
       res.status(200).json({
-        data: paciente
+        data: paciente,
       });
     } catch (error) {
-      console.error('Error in obtenerPerfilPaciente:', error);
+      console.error("Error in obtenerPerfilPaciente:", error);
       next(error);
     }
   }
@@ -116,24 +120,26 @@ class PacienteController {
       const { id } = req.params;
 
       // Verificar permisos
-      if (req.user.id !== id && req.user.tipo !== 'admin') {
+      if (req.user.id !== id && req.user.tipo !== "admin") {
         return res.status(403).json({
           error: {
-            code: 'ACCESS_DENIED',
-            message: 'No tienes permisos para ver los nutricionistas vinculados de este paciente'
+            code: "ACCESS_DENIED",
+            message:
+              "No tienes permisos para ver los nutricionistas vinculados de este paciente",
           },
           timestamp: new Date().toISOString(),
-          path: req.path
+          path: req.path,
         });
       }
 
-      const nutricionistas = await this.pacienteDAO.obtenerNutricionistasVinculados(id);
+      const nutricionistas =
+        await this.pacienteDAO.obtenerNutricionistasVinculados(id);
 
       res.status(200).json({
-        data: nutricionistas
+        data: nutricionistas,
       });
     } catch (error) {
-      console.error('Error in obtenerNutricionistasVinculados:', error);
+      console.error("Error in obtenerNutricionistasVinculados:", error);
       next(error);
     }
   }
@@ -147,24 +153,25 @@ class PacienteController {
       const { id } = req.params;
 
       // Verificar permisos
-      if (req.user.id !== id && req.user.tipo !== 'admin') {
+      if (req.user.id !== id && req.user.tipo !== "admin") {
         return res.status(403).json({
           error: {
-            code: 'ACCESS_DENIED',
-            message: 'No tienes permisos para ver el resumen de actividad de este paciente'
+            code: "ACCESS_DENIED",
+            message:
+              "No tienes permisos para ver el resumen de actividad de este paciente",
           },
           timestamp: new Date().toISOString(),
-          path: req.path
+          path: req.path,
         });
       }
 
       const resumen = await this.pacienteDAO.obtenerResumenActividad(id);
 
       res.status(200).json({
-        data: resumen
+        data: resumen,
       });
     } catch (error) {
-      console.error('Error in obtenerResumenActividad:', error);
+      console.error("Error in obtenerResumenActividad:", error);
       next(error);
     }
   }
@@ -179,14 +186,15 @@ class PacienteController {
       const updateData = req.body;
 
       // Verificar permisos
-      if (req.user.id !== id && req.user.tipo !== 'admin') {
+      if (req.user.id !== id && req.user.tipo !== "admin") {
         return res.status(403).json({
           error: {
-            code: 'ACCESS_DENIED',
-            message: 'No tienes permisos para actualizar el perfil de este paciente'
+            code: "ACCESS_DENIED",
+            message:
+              "No tienes permisos para actualizar el perfil de este paciente",
           },
           timestamp: new Date().toISOString(),
-          path: req.path
+          path: req.path,
         });
       }
 
@@ -195,39 +203,45 @@ class PacienteController {
       if (!paciente) {
         return res.status(404).json({
           error: {
-            code: 'PATIENT_NOT_FOUND',
-            message: 'Paciente no encontrado'
+            code: "PATIENT_NOT_FOUND",
+            message: "Paciente no encontrado",
           },
           timestamp: new Date().toISOString(),
-          path: req.path
+          path: req.path,
         });
       }
 
       // Si se está actualizando el email, verificar que no exista
       if (updateData.email && updateData.email !== paciente.email) {
-        const emailExiste = await this.pacienteDAO.verificarEmailExistente(updateData.email, id);
+        const emailExiste = await this.pacienteDAO.verificarEmailExistente(
+          updateData.email,
+          id
+        );
         if (emailExiste) {
           return res.status(409).json({
             error: {
-              code: 'EMAIL_ALREADY_EXISTS',
-              message: 'El email ya está en uso por otro paciente'
+              code: "EMAIL_ALREADY_EXISTS",
+              message: "El email ya está en uso por otro paciente",
             },
             timestamp: new Date().toISOString(),
-            path: req.path
+            path: req.path,
           });
         }
       }
 
-      const actualizado = await this.pacienteDAO.actualizarPerfil(id, updateData);
+      const actualizado = await this.pacienteDAO.actualizarPerfil(
+        id,
+        updateData
+      );
 
       if (!actualizado) {
         return res.status(400).json({
           error: {
-            code: 'UPDATE_FAILED',
-            message: 'No se pudo actualizar el perfil'
+            code: "UPDATE_FAILED",
+            message: "No se pudo actualizar el perfil",
           },
           timestamp: new Date().toISOString(),
-          path: req.path
+          path: req.path,
         });
       }
 
@@ -236,10 +250,10 @@ class PacienteController {
 
       res.status(200).json({
         data: perfilActualizado,
-        message: 'Perfil actualizado exitosamente'
+        message: "Perfil actualizado exitosamente",
       });
     } catch (error) {
-      console.error('Error in actualizarPerfilPaciente:', error);
+      console.error("Error in actualizarPerfilPaciente:", error);
       next(error);
     }
   }
@@ -251,23 +265,23 @@ class PacienteController {
   async obtenerMiPerfil(req, res, next) {
     try {
       const paciente = await this.pacienteDAO.obtenerPaciente(req.user.id);
-      
+
       if (!paciente) {
         return res.status(404).json({
           error: {
-            code: 'PATIENT_NOT_FOUND',
-            message: 'Paciente no encontrado'
+            code: "PATIENT_NOT_FOUND",
+            message: "Paciente no encontrado",
           },
           timestamp: new Date().toISOString(),
-          path: req.path
+          path: req.path,
         });
       }
 
       res.status(200).json({
-        data: paciente
+        data: paciente,
       });
     } catch (error) {
-      console.error('Error in obtenerMiPerfil:', error);
+      console.error("Error in obtenerMiPerfil:", error);
       next(error);
     }
   }
@@ -281,22 +295,26 @@ class PacienteController {
       const { limit = 5 } = req.query;
 
       const filtros = {
-        estado: ['pendiente', 'confirmado']
+        estado: ["pendiente", "confirmado"],
       };
 
       const options = {
         limit: parseInt(limit),
-        offset: 0
+        offset: 0,
       };
 
-      const resultado = await this.turnoDAO.obtenerTurnosPaciente(req.user.id, filtros, options);
+      const resultado = await this.turnoDAO.obtenerTurnosPaciente(
+        req.user.id,
+        filtros,
+        options
+      );
 
       res.status(200).json({
         data: resultado.data,
-        pagination: resultado.pagination
+        pagination: resultado.pagination,
       });
     } catch (error) {
-      console.error('Error in obtenerMisProximosTurnos:', error);
+      console.error("Error in obtenerMisProximosTurnos:", error);
       next(error);
     }
   }

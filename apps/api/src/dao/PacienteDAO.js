@@ -1,11 +1,11 @@
-const BaseDAO = require('./BaseDAO');
+const BaseDAO = require("./BaseDAO");
 
 /**
  * DAO para operaciones con pacientes
  */
 class PacienteDAO extends BaseDAO {
   constructor() {
-    super('pacientes');
+    super("pacientes");
   }
 
   /**
@@ -33,7 +33,7 @@ class PacienteDAO extends BaseDAO {
       const paciente = results[0];
       return this.formatPaciente(paciente);
     } catch (error) {
-      console.error('Error getting paciente:', error);
+      console.error("Error getting paciente:", error);
       throw error;
     }
   }
@@ -51,7 +51,7 @@ class PacienteDAO extends BaseDAO {
       const results = await this.customQuery(query, [email]);
       return results.length > 0 ? this.formatPaciente(results[0]) : null;
     } catch (error) {
-      console.error('Error getting paciente by email:', error);
+      console.error("Error getting paciente by email:", error);
       throw error;
     }
   }
@@ -78,19 +78,19 @@ class PacienteDAO extends BaseDAO {
 
     try {
       const results = await this.customQuery(query, [pacienteId]);
-      return results.map(v => ({
+      return results.map((v) => ({
         id: v.nutricionista_id,
         nombre: v.nombre,
         apellido: v.apellido,
         matricula: v.matricula,
-        especialidades: JSON.parse(v.especialidades || '[]'),
-        modalidad: JSON.parse(v.modalidad || '[]'),
+        especialidades: JSON.parse(v.especialidades || "[]"),
+        modalidad: JSON.parse(v.modalidad || "[]"),
         rating: parseFloat(v.rating),
         foto: v.foto,
-        fechaVinculacion: v.fecha_inicio
+        fechaVinculacion: v.fecha_inicio,
       }));
     } catch (error) {
-      console.error('Error getting linked nutritionists:', error);
+      console.error("Error getting linked nutritionists:", error);
       throw error;
     }
   }
@@ -118,7 +118,7 @@ class PacienteDAO extends BaseDAO {
       const results = await this.customQuery(query, [pacienteId]);
       return results[0];
     } catch (error) {
-      console.error('Error getting patient activity summary:', error);
+      console.error("Error getting patient activity summary:", error);
       throw error;
     }
   }
@@ -140,14 +140,14 @@ class PacienteDAO extends BaseDAO {
       pacienteData.apellido,
       pacienteData.email,
       pacienteData.contraseñaHash,
-      pacienteData.telefono
+      pacienteData.telefono,
     ];
 
     try {
       const result = await this.customQuery(query, params);
       return { id: pacienteData.id, ...pacienteData };
     } catch (error) {
-      console.error('Error creating paciente:', error);
+      console.error("Error creating paciente:", error);
       throw error;
     }
   }
@@ -156,16 +156,18 @@ class PacienteDAO extends BaseDAO {
    * Actualizar perfil del paciente
    */
   async actualizarPerfil(id, updateData) {
-    const allowedFields = ['nombre', 'apellido', 'telefono'];
-    const fields = Object.keys(updateData).filter(field => allowedFields.includes(field));
-    
+    const allowedFields = ["nombre", "apellido", "telefono"];
+    const fields = Object.keys(updateData).filter((field) =>
+      allowedFields.includes(field)
+    );
+
     if (fields.length === 0) {
-      throw new Error('No hay campos válidos para actualizar');
+      throw new Error("No hay campos válidos para actualizar");
     }
 
-    const setClause = fields.map(field => `${field} = ?`).join(', ');
-    const values = fields.map(field => updateData[field]);
-    
+    const setClause = fields.map((field) => `${field} = ?`).join(", ");
+    const values = fields.map((field) => updateData[field]);
+
     const query = `
       UPDATE pacientes 
       SET ${setClause}, fecha_modificacion = NOW()
@@ -176,7 +178,7 @@ class PacienteDAO extends BaseDAO {
       const result = await this.customQuery(query, [...values, id]);
       return result.affectedRows > 0;
     } catch (error) {
-      console.error('Error updating paciente profile:', error);
+      console.error("Error updating paciente profile:", error);
       throw error;
     }
   }
@@ -197,7 +199,7 @@ class PacienteDAO extends BaseDAO {
       const results = await this.customQuery(query, params);
       return results.length > 0;
     } catch (error) {
-      console.error('Error checking email existence:', error);
+      console.error("Error checking email existence:", error);
       throw error;
     }
   }
@@ -214,7 +216,8 @@ class PacienteDAO extends BaseDAO {
       telefono: paciente.telefono,
       fechaRegistro: paciente.fecha_registro,
       totalTurnos: parseInt(paciente.total_turnos) || 0,
-      nutricionistasVinculados: parseInt(paciente.nutricionistas_vinculados) || 0
+      nutricionistasVinculados:
+        parseInt(paciente.nutricionistas_vinculados) || 0,
     };
   }
 }

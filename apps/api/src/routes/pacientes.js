@@ -1,19 +1,23 @@
-const express = require('express');
-const PacienteController = require('../controllers/PacienteController');
-const { authMiddleware, requirePaciente } = require('../middleware/auth');
-const { validateParams, validateQuery, validateBody } = require('../validators/validator');
-const { pacienteSchemas } = require('../validators/schemas');
+const express = require("express");
+const PacienteController = require("../controllers/PacienteController");
+const { authMiddleware, requirePaciente } = require("../middleware/auth");
+const {
+  validateParams,
+  validateQuery,
+  validateBody,
+} = require("../validators/validator");
+const { pacienteSchemas } = require("../validators/schemas");
 
 const router = express.Router();
 const pacienteController = new PacienteController();
 
 // Esquema para actualización de perfil
 const actualizarPerfilSchema = {
-  body: require('joi').object({
-    nombre: require('joi').string().optional(),
-    apellido: require('joi').string().optional(),
-    telefono: require('joi').string().optional()
-  })
+  body: require("joi").object({
+    nombre: require("joi").string().optional(),
+    apellido: require("joi").string().optional(),
+    telefono: require("joi").string().optional(),
+  }),
 };
 
 /**
@@ -44,7 +48,8 @@ const actualizarPerfilSchema = {
  *       500:
  *         description: Error interno del servidor
  */
-router.get('/:id',
+router.get(
+  "/:id",
   authMiddleware,
   validateParams(pacienteSchemas.obtenerTurnosPaciente.params),
   pacienteController.obtenerPerfilPaciente.bind(pacienteController)
@@ -95,7 +100,8 @@ router.get('/:id',
  *       500:
  *         description: Error interno del servidor
  */
-router.patch('/:id',
+router.patch(
+  "/:id",
   authMiddleware,
   validateParams(pacienteSchemas.obtenerTurnosPaciente.params),
   validateBody(actualizarPerfilSchema.body),
@@ -150,7 +156,8 @@ router.patch('/:id',
  *       500:
  *         description: Error interno del servidor
  */
-router.get('/:id/turnos',
+router.get(
+  "/:id/turnos",
   authMiddleware,
   validateParams(pacienteSchemas.obtenerTurnosPaciente.params),
   validateQuery(pacienteSchemas.obtenerTurnosPaciente.query),
@@ -185,7 +192,8 @@ router.get('/:id/turnos',
  *       500:
  *         description: Error interno del servidor
  */
-router.get('/:id/nutricionistas',
+router.get(
+  "/:id/nutricionistas",
   authMiddleware,
   validateParams(pacienteSchemas.obtenerTurnosPaciente.params),
   pacienteController.obtenerNutricionistasVinculados.bind(pacienteController)
@@ -219,7 +227,8 @@ router.get('/:id/nutricionistas',
  *       500:
  *         description: Error interno del servidor
  */
-router.get('/:id/resumen',
+router.get(
+  "/:id/resumen",
   authMiddleware,
   validateParams(pacienteSchemas.obtenerTurnosPaciente.params),
   pacienteController.obtenerResumenActividad.bind(pacienteController)
@@ -243,7 +252,8 @@ router.get('/:id/resumen',
  *       500:
  *         description: Error interno del servidor
  */
-router.get('/mi-perfil',
+router.get(
+  "/mi-perfil",
   authMiddleware,
   requirePaciente,
   pacienteController.obtenerMiPerfil.bind(pacienteController)
@@ -272,7 +282,8 @@ router.get('/mi-perfil',
  *       500:
  *         description: Error interno del servidor
  */
-router.get('/mis-turnos/proximos',
+router.get(
+  "/mis-turnos/proximos",
   authMiddleware,
   requirePaciente,
   pacienteController.obtenerMisProximosTurnos.bind(pacienteController)

@@ -1,11 +1,11 @@
-const BaseDAO = require('./BaseDAO');
+const BaseDAO = require("./BaseDAO");
 
 /**
  * DAO para operaciones con nutricionistas
  */
 class NutricionistaDAO extends BaseDAO {
   constructor() {
-    super('nutricionistas');
+    super("nutricionistas");
   }
 
   /**
@@ -29,7 +29,7 @@ class NutricionistaDAO extends BaseDAO {
       FROM nutricionistas n
       WHERE n.activo = 1
     `;
-    
+
     const params = [];
 
     // Aplicar filtros
@@ -40,13 +40,15 @@ class NutricionistaDAO extends BaseDAO {
     }
 
     if (filtros.especialidad && filtros.especialidad.length > 0) {
-      const especialidadPlaceholders = filtros.especialidad.map(() => '?').join(',');
+      const especialidadPlaceholders = filtros.especialidad
+        .map(() => "?")
+        .join(",");
       query += ` AND JSON_CONTAINS(n.especialidades, ?)`;
       params.push(`"${filtros.especialidad[0]}"`); // Simplificado para una especialidad
     }
 
     if (filtros.modalidad && filtros.modalidad.length > 0) {
-      const modalidadPlaceholders = filtros.modalidad.map(() => '?').join(',');
+      const modalidadPlaceholders = filtros.modalidad.map(() => "?").join(",");
       query += ` AND JSON_CONTAINS(n.modalidad, ?)`;
       params.push(`"${filtros.modalidad[0]}"`); // Simplificado para una modalidad
     }
@@ -62,11 +64,11 @@ class NutricionistaDAO extends BaseDAO {
 
     try {
       const results = await this.customQuery(query, params);
-      
+
       // Obtener total para paginación
       let countQuery = `SELECT COUNT(*) as total FROM nutricionistas n WHERE n.activo = 1`;
       const countParams = [];
-      
+
       if (filtros.nombre) {
         countQuery += ` AND (n.nombre LIKE ? OR n.apellido LIKE ?)`;
         const nombrePattern = `%${filtros.nombre}%`;
@@ -98,11 +100,11 @@ class NutricionistaDAO extends BaseDAO {
           limit,
           offset,
           hasNext: offset + limit < total,
-          hasPrev: offset > 0
-        }
+          hasPrev: offset > 0,
+        },
       };
     } catch (error) {
-      console.error('Error searching nutritionists:', error);
+      console.error("Error searching nutritionists:", error);
       throw error;
     }
   }
@@ -134,7 +136,7 @@ class NutricionistaDAO extends BaseDAO {
       }
 
       const nutricionista = results[0];
-      
+
       // Obtener horarios de atención
       const horariosQuery = `
         SELECT dia, hora_inicio as horaInicio, hora_fin as horaFin
@@ -163,10 +165,10 @@ class NutricionistaDAO extends BaseDAO {
         ...this.formatNutricionista(nutricionista),
         formacion: nutricionista.formacion || [],
         horariosAtencion: horarios,
-        reseñas: reseñas
+        reseñas: reseñas,
       };
     } catch (error) {
-      console.error('Error getting nutritionist profile:', error);
+      console.error("Error getting nutritionist profile:", error);
       throw error;
     }
   }
@@ -185,10 +187,14 @@ class NutricionistaDAO extends BaseDAO {
     `;
 
     try {
-      const result = await this.customQuery(query, [nutricionistaId, fecha, hora]);
+      const result = await this.customQuery(query, [
+        nutricionistaId,
+        fecha,
+        hora,
+      ]);
       return result[0].count === 0;
     } catch (error) {
-      console.error('Error checking availability:', error);
+      console.error("Error checking availability:", error);
       throw error;
     }
   }
@@ -202,11 +208,11 @@ class NutricionistaDAO extends BaseDAO {
       nombre: nutricionista.nombre,
       apellido: nutricionista.apellido,
       matricula: nutricionista.matricula,
-      especialidades: JSON.parse(nutricionista.especialidades || '[]'),
-      modalidad: JSON.parse(nutricionista.modalidad || '[]'),
+      especialidades: JSON.parse(nutricionista.especialidades || "[]"),
+      modalidad: JSON.parse(nutricionista.modalidad || "[]"),
       rating: parseFloat(nutricionista.rating),
       totalResenas: nutricionista.totalResenas,
-      foto: nutricionista.foto
+      foto: nutricionista.foto,
     };
   }
 
@@ -219,13 +225,13 @@ class NutricionistaDAO extends BaseDAO {
       nombre: nutricionista.nombre,
       apellido: nutricionista.apellido,
       matricula: nutricionista.matricula,
-      especialidades: JSON.parse(nutricionista.especialidades || '[]'),
-      modalidad: JSON.parse(nutricionista.modalidad || '[]'),
+      especialidades: JSON.parse(nutricionista.especialidades || "[]"),
+      modalidad: JSON.parse(nutricionista.modalidad || "[]"),
       rating: parseFloat(nutricionista.rating),
       totalResenas: nutricionista.total_resenas,
       foto: nutricionista.foto,
       experiencia: nutricionista.experiencia,
-      descripcion: nutricionista.descripcion
+      descripcion: nutricionista.descripcion,
     };
   }
 }

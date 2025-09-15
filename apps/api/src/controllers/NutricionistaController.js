@@ -1,4 +1,4 @@
-const NutricionistaDAO = require('../dao/NutricionistaDAO');
+const NutricionistaDAO = require("../dao/NutricionistaDAO");
 
 /**
  * Controlador para operaciones con nutricionistas
@@ -18,29 +18,32 @@ class NutricionistaController {
         nombre: req.query.nombre,
         especialidad: req.query.especialidad,
         modalidad: req.query.modalidad,
-        rating_min: req.query.rating_min
+        rating_min: req.query.rating_min,
       };
 
       const options = {
         limit: parseInt(req.query.limit) || 20,
-        offset: parseInt(req.query.offset) || 0
+        offset: parseInt(req.query.offset) || 0,
       };
 
       // Limpiar filtros undefined
-      Object.keys(filtros).forEach(key => {
+      Object.keys(filtros).forEach((key) => {
         if (filtros[key] === undefined) {
           delete filtros[key];
         }
       });
 
-      const resultado = await this.nutricionistaDAO.buscarConFiltros(filtros, options);
+      const resultado = await this.nutricionistaDAO.buscarConFiltros(
+        filtros,
+        options
+      );
 
       res.status(200).json({
         data: resultado.data,
-        pagination: resultado.pagination
+        pagination: resultado.pagination,
       });
     } catch (error) {
-      console.error('Error in buscarNutricionistas:', error);
+      console.error("Error in buscarNutricionistas:", error);
       next(error);
     }
   }
@@ -58,19 +61,19 @@ class NutricionistaController {
       if (!perfil) {
         return res.status(404).json({
           error: {
-            code: 'NUTRITIONIST_NOT_FOUND',
-            message: 'Nutricionista no encontrado'
+            code: "NUTRITIONIST_NOT_FOUND",
+            message: "Nutricionista no encontrado",
           },
           timestamp: new Date().toISOString(),
-          path: req.path
+          path: req.path,
         });
       }
 
       res.status(200).json({
-        data: perfil
+        data: perfil,
       });
     } catch (error) {
-      console.error('Error in obtenerPerfilNutricionista:', error);
+      console.error("Error in obtenerPerfilNutricionista:", error);
       next(error);
     }
   }
@@ -87,26 +90,30 @@ class NutricionistaController {
       if (!fecha || !hora) {
         return res.status(400).json({
           error: {
-            code: 'MISSING_PARAMETERS',
-            message: 'Fecha y hora son requeridos'
+            code: "MISSING_PARAMETERS",
+            message: "Fecha y hora son requeridos",
           },
           timestamp: new Date().toISOString(),
-          path: req.path
+          path: req.path,
         });
       }
 
-      const disponible = await this.nutricionistaDAO.verificarDisponibilidad(id, fecha, hora);
+      const disponible = await this.nutricionistaDAO.verificarDisponibilidad(
+        id,
+        fecha,
+        hora
+      );
 
       res.status(200).json({
         data: {
           nutricionistaId: id,
           fecha,
           hora,
-          disponible
-        }
+          disponible,
+        },
       });
     } catch (error) {
-      console.error('Error in verificarDisponibilidad:', error);
+      console.error("Error in verificarDisponibilidad:", error);
       next(error);
     }
   }
@@ -125,11 +132,11 @@ class NutricionistaController {
       if (!nutricionista) {
         return res.status(404).json({
           error: {
-            code: 'NUTRITIONIST_NOT_FOUND',
-            message: 'Nutricionista no encontrado'
+            code: "NUTRITIONIST_NOT_FOUND",
+            message: "Nutricionista no encontrado",
           },
           timestamp: new Date().toISOString(),
-          path: req.path
+          path: req.path,
         });
       }
 
@@ -140,24 +147,29 @@ class NutricionistaController {
         WHERE nutricionista_id = ?
         ORDER BY FIELD(dia, 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo')
       `;
-      
-      const horarios = await this.nutricionistaDAO.customQuery(horariosQuery, [id]);
+
+      const horarios = await this.nutricionistaDAO.customQuery(horariosQuery, [
+        id,
+      ]);
 
       // Si se especifica una fecha, obtener horarios disponibles
       let horariosDisponibles = null;
       if (fecha) {
-        horariosDisponibles = await this.obtenerHorariosDisponiblesFecha(id, fecha);
+        horariosDisponibles = await this.obtenerHorariosDisponiblesFecha(
+          id,
+          fecha
+        );
       }
 
       res.status(200).json({
         data: {
           nutricionistaId: id,
           horariosAtencion: horarios,
-          horariosDisponibles: horariosDisponibles
-        }
+          horariosDisponibles: horariosDisponibles,
+        },
       });
     } catch (error) {
-      console.error('Error in obtenerHorariosAtencion:', error);
+      console.error("Error in obtenerHorariosAtencion:", error);
       next(error);
     }
   }
@@ -184,10 +196,13 @@ class NutricionistaController {
     `;
 
     try {
-      const resultados = await this.nutricionistaDAO.customQuery(query, [fecha, nutricionistaId]);
+      const resultados = await this.nutricionistaDAO.customQuery(query, [
+        fecha,
+        nutricionistaId,
+      ]);
       return resultados;
     } catch (error) {
-      console.error('Error getting available hours for date:', error);
+      console.error("Error getting available hours for date:", error);
       return [];
     }
   }

@@ -1,30 +1,42 @@
-const express = require('express');
-const multer = require('multer');
-const path = require('path');
-const DocumentoController = require('../controllers/DocumentoController');
-const { authMiddleware, requirePaciente } = require('../middleware/auth');
-const { validateParams, validateFile } = require('../validators/validator');
-const { documentoSchemas } = require('../validators/schemas');
+const express = require("express");
+const multer = require("multer");
+const path = require("path");
+const DocumentoController = require("../controllers/DocumentoController");
+const { authMiddleware, requirePaciente } = require("../middleware/auth");
+const { validateParams, validateFile } = require("../validators/validator");
+const { documentoSchemas } = require("../validators/schemas");
 
 const router = express.Router();
 const documentoController = new DocumentoController();
 
 // Configuración de multer para uploads
 const upload = multer({
-  dest: 'uploads/temp/',
+  dest: "uploads/temp/",
   limits: {
-    fileSize: parseInt(process.env.UPLOAD_MAX_SIZE) || 10485760 // 10MB
+    fileSize: parseInt(process.env.UPLOAD_MAX_SIZE) || 10485760, // 10MB
   },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = (process.env.UPLOAD_ALLOWED_TYPES || 'pdf,jpg,jpeg,png').split(',');
-    const fileExtension = path.extname(file.originalname).toLowerCase().substring(1);
-    
+    const allowedTypes = (
+      process.env.UPLOAD_ALLOWED_TYPES || "pdf,jpg,jpeg,png"
+    ).split(",");
+    const fileExtension = path
+      .extname(file.originalname)
+      .toLowerCase()
+      .substring(1);
+
     if (allowedTypes.includes(fileExtension)) {
       cb(null, true);
     } else {
-      cb(new Error(`Tipo de archivo no permitido. Tipos permitidos: ${allowedTypes.join(', ')}`), false);
+      cb(
+        new Error(
+          `Tipo de archivo no permitido. Tipos permitidos: ${allowedTypes.join(
+            ", "
+          )}`
+        ),
+        false
+      );
     }
-  }
+  },
 });
 
 /**
@@ -79,11 +91,12 @@ const upload = multer({
  *       500:
  *         description: Error interno del servidor
  */
-router.post('/:id/documentos',
+router.post(
+  "/:id/documentos",
   authMiddleware,
   requirePaciente,
   validateParams(documentoSchemas.adjuntarDocumento.params),
-  upload.single('archivo'),
+  upload.single("archivo"),
   validateFile(),
   documentoController.adjuntarDocumento.bind(documentoController)
 );
@@ -116,7 +129,8 @@ router.post('/:id/documentos',
  *       500:
  *         description: Error interno del servidor
  */
-router.get('/:id/documentos',
+router.get(
+  "/:id/documentos",
   authMiddleware,
   validateParams(documentoSchemas.obtenerDocumentosTurno.params),
   documentoController.obtenerDocumentosTurno.bind(documentoController)
@@ -150,7 +164,8 @@ router.get('/:id/documentos',
  *       500:
  *         description: Error interno del servidor
  */
-router.get('/:id/descargar',
+router.get(
+  "/:id/descargar",
   authMiddleware,
   validateParams(documentoSchemas.adjuntarDocumento.params), // Reutilizar schema de validación de ID
   documentoController.descargarDocumento.bind(documentoController)
@@ -184,7 +199,8 @@ router.get('/:id/descargar',
  *       500:
  *         description: Error interno del servidor
  */
-router.delete('/:id',
+router.delete(
+  "/:id",
   authMiddleware,
   validateParams(documentoSchemas.adjuntarDocumento.params), // Reutilizar schema de validación de ID
   documentoController.eliminarDocumento.bind(documentoController)
@@ -225,7 +241,8 @@ router.delete('/:id',
  *       500:
  *         description: Error interno del servidor
  */
-router.get('/mis-documentos',
+router.get(
+  "/mis-documentos",
   authMiddleware,
   requirePaciente,
   documentoController.obtenerMisDocumentos.bind(documentoController)
@@ -247,7 +264,8 @@ router.get('/mis-documentos',
  *       500:
  *         description: Error interno del servidor
  */
-router.get('/estadisticas',
+router.get(
+  "/estadisticas",
   authMiddleware,
   requirePaciente,
   documentoController.obtenerEstadisticasDocumentos.bind(documentoController)

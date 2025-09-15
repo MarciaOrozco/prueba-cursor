@@ -22,17 +22,20 @@ API backend para la plataforma Nutrito desarrollada con Node.js y Express, sigui
 ## 🛠️ Instalación
 
 1. **Clonar e instalar dependencias:**
+
 ```bash
 cd apps/api
 npm install
 ```
 
 2. **Configurar variables de entorno:**
+
 ```bash
 cp env.example .env
 ```
 
 Editar `.env` con tus configuraciones:
+
 ```env
 NODE_ENV=development
 PORT=3000
@@ -45,6 +48,7 @@ JWT_SECRET=tu-secret-jwt-muy-seguro
 ```
 
 3. **Crear base de datos:**
+
 ```sql
 CREATE DATABASE nutrito_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
@@ -52,6 +56,7 @@ CREATE DATABASE nutrito_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 4. **Ejecutar migraciones** (cuando estén disponibles)
 
 5. **Iniciar servidor:**
+
 ```bash
 # Desarrollo
 npm run dev
@@ -63,6 +68,7 @@ npm start
 ## 📚 Documentación API
 
 Una vez iniciado el servidor, la documentación interactiva estará disponible en:
+
 - **Swagger UI**: http://localhost:3000/api-docs
 - **Health Check**: http://localhost:3000/health
 
@@ -109,22 +115,26 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ## 📊 Endpoints Principales
 
 ### Nutricionistas
+
 - `GET /v1/nutricionistas` - Buscar nutricionistas con filtros
 - `GET /v1/nutricionistas/:id` - Perfil completo del nutricionista
 - `GET /v1/nutricionistas/:id/disponibilidad` - Verificar disponibilidad
 
 ### Turnos
+
 - `POST /v1/turnos` - Agendar nuevo turno
 - `GET /v1/turnos/:id` - Obtener detalles del turno
 - `PATCH /v1/turnos/:id/cancelar` - Cancelar turno
 - `PATCH /v1/turnos/:id/reprogramar` - Reprogramar turno
 
 ### Documentos
+
 - `POST /v1/turnos/:id/documentos` - Adjuntar documento
 - `GET /v1/turnos/:id/documentos` - Obtener documentos del turno
 - `GET /v1/documentos/:id/descargar` - Descargar documento
 
 ### Pacientes
+
 - `GET /v1/pacientes/:id/turnos` - Turnos del paciente
 - `GET /v1/pacientes/mi-perfil` - Mi perfil
 - `PATCH /v1/pacientes/:id` - Actualizar perfil
@@ -150,6 +160,7 @@ npm run test:watch
 ## 📝 Logs
 
 Los logs se muestran en consola con el formato:
+
 ```
 [timestamp] method url status responseTime
 ```
@@ -181,6 +192,7 @@ La API devuelve errores en formato estándar:
 ## 📁 Uploads
 
 Los archivos se almacenan en `/uploads/` con:
+
 - Tamaño máximo: 10MB
 - Tipos permitidos: PDF, JPG, JPEG, PNG
 - Nombres únicos generados con UUID
@@ -188,6 +200,7 @@ Los archivos se almacenan en `/uploads/` con:
 ## 🗄️ Base de Datos
 
 El proyecto utiliza MySQL con:
+
 - Pool de conexiones
 - Transacciones
 - Queries preparadas

@@ -1,4 +1,4 @@
-const { executeQuery, executeTransaction } = require('../config/database');
+const { executeQuery, executeTransaction } = require("../config/database");
 
 /**
  * Clase base para todos los DAOs
@@ -15,10 +15,12 @@ class BaseDAO {
   async create(data) {
     const fields = Object.keys(data);
     const values = Object.values(data);
-    const placeholders = fields.map(() => '?').join(', ');
-    
-    const query = `INSERT INTO ${this.tableName} (${fields.join(', ')}) VALUES (${placeholders})`;
-    
+    const placeholders = fields.map(() => "?").join(", ");
+
+    const query = `INSERT INTO ${this.tableName} (${fields.join(
+      ", "
+    )}) VALUES (${placeholders})`;
+
     try {
       const result = await executeQuery(query, values);
       return { id: result.insertId, ...data };
@@ -33,7 +35,7 @@ class BaseDAO {
    */
   async findById(id) {
     const query = `SELECT * FROM ${this.tableName} WHERE id = ?`;
-    
+
     try {
       const results = await executeQuery(query, [id]);
       return results.length > 0 ? results[0] : null;
@@ -47,22 +49,27 @@ class BaseDAO {
    * Obtener todos los registros con paginación
    */
   async findAll(options = {}) {
-    const { limit = 20, offset = 0, orderBy = 'id', orderDirection = 'ASC' } = options;
-    
+    const {
+      limit = 20,
+      offset = 0,
+      orderBy = "id",
+      orderDirection = "ASC",
+    } = options;
+
     const query = `
       SELECT * FROM ${this.tableName} 
       ORDER BY ${orderBy} ${orderDirection} 
       LIMIT ? OFFSET ?
     `;
-    
+
     try {
       const results = await executeQuery(query, [limit, offset]);
-      
+
       // Obtener total para paginación
       const countQuery = `SELECT COUNT(*) as total FROM ${this.tableName}`;
       const countResult = await executeQuery(countQuery);
       const total = countResult[0].total;
-      
+
       return {
         data: results,
         pagination: {
@@ -70,8 +77,8 @@ class BaseDAO {
           limit,
           offset,
           hasNext: offset + limit < total,
-          hasPrev: offset > 0
-        }
+          hasPrev: offset > 0,
+        },
       };
     } catch (error) {
       console.error(`Error finding all ${this.tableName}:`, error);
@@ -85,10 +92,10 @@ class BaseDAO {
   async update(id, data) {
     const fields = Object.keys(data);
     const values = Object.values(data);
-    const setClause = fields.map(field => `${field} = ?`).join(', ');
-    
+    const setClause = fields.map((field) => `${field} = ?`).join(", ");
+
     const query = `UPDATE ${this.tableName} SET ${setClause} WHERE id = ?`;
-    
+
     try {
       const result = await executeQuery(query, [...values, id]);
       return result.affectedRows > 0;
@@ -103,7 +110,7 @@ class BaseDAO {
    */
   async delete(id) {
     const query = `DELETE FROM ${this.tableName} WHERE id = ?`;
-    
+
     try {
       const result = await executeQuery(query, [id]);
       return result.affectedRows > 0;
@@ -117,19 +124,24 @@ class BaseDAO {
    * Buscar registros con condiciones personalizadas
    */
   async findBy(conditions, options = {}) {
-    const { limit = 20, offset = 0, orderBy = 'id', orderDirection = 'ASC' } = options;
-    
+    const {
+      limit = 20,
+      offset = 0,
+      orderBy = "id",
+      orderDirection = "ASC",
+    } = options;
+
     const fields = Object.keys(conditions);
     const values = Object.values(conditions);
-    const whereClause = fields.map(field => `${field} = ?`).join(' AND ');
-    
+    const whereClause = fields.map((field) => `${field} = ?`).join(" AND ");
+
     const query = `
       SELECT * FROM ${this.tableName} 
       WHERE ${whereClause}
       ORDER BY ${orderBy} ${orderDirection}
       LIMIT ? OFFSET ?
     `;
-    
+
     try {
       const results = await executeQuery(query, [...values, limit, offset]);
       return results;
@@ -145,14 +157,14 @@ class BaseDAO {
   async count(conditions = {}) {
     let query = `SELECT COUNT(*) as total FROM ${this.tableName}`;
     const values = [];
-    
+
     if (Object.keys(conditions).length > 0) {
       const fields = Object.keys(conditions);
-      const whereClause = fields.map(field => `${field} = ?`).join(' AND ');
+      const whereClause = fields.map((field) => `${field} = ?`).join(" AND ");
       query += ` WHERE ${whereClause}`;
       values.push(...Object.values(conditions));
     }
-    
+
     try {
       const result = await executeQuery(query, values);
       return result[0].total;
@@ -170,7 +182,10 @@ class BaseDAO {
       const results = await executeQuery(query, params);
       return results;
     } catch (error) {
-      console.error(`Error executing custom query for ${this.tableName}:`, error);
+      console.error(
+        `Error executing custom query for ${this.tableName}:`,
+        error
+      );
       throw error;
     }
   }
@@ -183,7 +198,10 @@ class BaseDAO {
       const results = await executeTransaction(queries);
       return results;
     } catch (error) {
-      console.error(`Error executing transaction for ${this.tableName}:`, error);
+      console.error(
+        `Error executing transaction for ${this.tableName}:`,
+        error
+      );
       throw error;
     }
   }

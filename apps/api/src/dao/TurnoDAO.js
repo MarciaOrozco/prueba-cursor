@@ -1,11 +1,11 @@
-const BaseDAO = require('./BaseDAO');
+const BaseDAO = require("./BaseDAO");
 
 /**
  * DAO para operaciones con turnos
  */
 class TurnoDAO extends BaseDAO {
   constructor() {
-    super('turnos');
+    super("turnos");
   }
 
   /**
@@ -26,20 +26,23 @@ class TurnoDAO extends BaseDAO {
       turnoData.fecha,
       turnoData.hora,
       turnoData.modalidad,
-      turnoData.estado || 'pendiente',
+      turnoData.estado || "pendiente",
       turnoData.metodoPago,
-      turnoData.motivo
+      turnoData.motivo,
     ];
 
     try {
       const result = await this.customQuery(query, params);
-      
+
       // Crear vínculo paciente-nutricionista si no existe
-      await this.crearVinculoPacienteNutricionista(turnoData.pacienteId, turnoData.nutricionistaId);
-      
+      await this.crearVinculoPacienteNutricionista(
+        turnoData.pacienteId,
+        turnoData.nutricionistaId
+      );
+
       return { id: turnoData.id, ...turnoData };
     } catch (error) {
-      console.error('Error creating turno:', error);
+      console.error("Error creating turno:", error);
       throw error;
     }
   }
@@ -77,7 +80,7 @@ class TurnoDAO extends BaseDAO {
       const turno = results[0];
       return this.formatTurno(turno);
     } catch (error) {
-      console.error('Error getting turno:', error);
+      console.error("Error getting turno:", error);
       throw error;
     }
   }
@@ -87,7 +90,7 @@ class TurnoDAO extends BaseDAO {
    */
   async obtenerTurnosPaciente(pacienteId, filtros = {}, options = {}) {
     const { limit = 20, offset = 0 } = options;
-    
+
     let query = `
       SELECT 
         t.*,
@@ -102,12 +105,12 @@ class TurnoDAO extends BaseDAO {
       JOIN nutricionistas n ON t.nutricionista_id = n.id
       WHERE t.paciente_id = ?
     `;
-    
+
     const params = [pacienteId];
 
     // Aplicar filtros de estado
     if (filtros.estado && filtros.estado.length > 0) {
-      const estadoPlaceholders = filtros.estado.map(() => '?').join(',');
+      const estadoPlaceholders = filtros.estado.map(() => "?").join(",");
       query += ` AND t.estado IN (${estadoPlaceholders})`;
       params.push(...filtros.estado);
     }
@@ -118,13 +121,13 @@ class TurnoDAO extends BaseDAO {
 
     try {
       const results = await this.customQuery(query, params);
-      
+
       // Obtener total para paginación
       let countQuery = `SELECT COUNT(*) as total FROM turnos t WHERE t.paciente_id = ?`;
       const countParams = [pacienteId];
-      
+
       if (filtros.estado && filtros.estado.length > 0) {
-        const estadoPlaceholders = filtros.estado.map(() => '?').join(',');
+        const estadoPlaceholders = filtros.estado.map(() => "?").join(",");
         countQuery += ` AND t.estado IN (${estadoPlaceholders})`;
         countParams.push(...filtros.estado);
       }
@@ -139,11 +142,11 @@ class TurnoDAO extends BaseDAO {
           limit,
           offset,
           hasNext: offset + limit < total,
-          hasPrev: offset > 0
-        }
+          hasPrev: offset > 0,
+        },
       };
     } catch (error) {
-      console.error('Error getting patient turnos:', error);
+      console.error("Error getting patient turnos:", error);
       throw error;
     }
   }
@@ -160,9 +163,9 @@ class TurnoDAO extends BaseDAO {
 
     try {
       const result = await this.customQuery(query, [motivo, id]);
-      
+
       if (result.affectedRows === 0) {
-        throw new Error('Turno no encontrado o no puede ser cancelado');
+        throw new Error("Turno no encontrado o no puede ser cancelado");
       }
 
       // Aquí se podría agregar lógica para notificar al nutricionista
@@ -170,7 +173,7 @@ class TurnoDAO extends BaseDAO {
 
       return await this.obtenerTurnoCompleto(id);
     } catch (error) {
-      console.error('Error canceling turno:', error);
+      console.error("Error canceling turno:", error);
       throw error;
     }
   }
@@ -182,17 +185,17 @@ class TurnoDAO extends BaseDAO {
     // Verificar disponibilidad
     const turno = await this.obtenerTurnoCompleto(id);
     if (!turno) {
-      throw new Error('Turno no encontrado');
+      throw new Error("Turno no encontrado");
     }
 
     const disponible = await this.verificarDisponibilidad(
-      turno.nutricionistaId, 
-      nuevaFecha, 
+      turno.nutricionistaId,
+      nuevaFecha,
       nuevaHora
     );
 
     if (!disponible) {
-      throw new Error('El nuevo horario no está disponible');
+      throw new Error("El nuevo horario no está disponible");
     }
 
     let query = `
@@ -211,14 +214,14 @@ class TurnoDAO extends BaseDAO {
 
     try {
       const result = await this.customQuery(query, params);
-      
+
       if (result.affectedRows === 0) {
-        throw new Error('No se pudo reprogramar el turno');
+        throw new Error("No se pudo reprogramar el turno");
       }
 
       return await this.obtenerTurnoCompleto(id);
     } catch (error) {
-      console.error('Error rescheduling turno:', error);
+      console.error("Error rescheduling turno:", error);
       throw error;
     }
   }
@@ -237,10 +240,14 @@ class TurnoDAO extends BaseDAO {
     `;
 
     try {
-      const result = await this.customQuery(query, [nutricionistaId, fecha, hora]);
+      const result = await this.customQuery(query, [
+        nutricionistaId,
+        fecha,
+        hora,
+      ]);
       return result[0].count === 0;
     } catch (error) {
-      console.error('Error checking availability:', error);
+      console.error("Error checking availability:", error);
       throw error;
     }
   }
@@ -255,8 +262,11 @@ class TurnoDAO extends BaseDAO {
     `;
 
     try {
-      const existing = await this.customQuery(checkQuery, [pacienteId, nutricionistaId]);
-      
+      const existing = await this.customQuery(checkQuery, [
+        pacienteId,
+        nutricionistaId,
+      ]);
+
       if (existing.length === 0) {
         const insertQuery = `
           INSERT INTO vinculos_paciente_nutricionista (paciente_id, nutricionista_id, fecha_inicio, activo)
@@ -265,7 +275,7 @@ class TurnoDAO extends BaseDAO {
         await this.customQuery(insertQuery, [pacienteId, nutricionistaId]);
       }
     } catch (error) {
-      console.error('Error creating patient-nutritionist link:', error);
+      console.error("Error creating patient-nutritionist link:", error);
       // No lanzar error aquí ya que es una operación secundaria
     }
   }
@@ -286,23 +296,29 @@ class TurnoDAO extends BaseDAO {
       motivo: turno.motivo,
       fechaCreacion: turno.fecha_creacion,
       fechaModificacion: turno.fecha_modificacion,
-      paciente: turno.paciente_nombre ? {
-        id: turno.paciente_id,
-        nombre: turno.paciente_nombre,
-        apellido: turno.paciente_apellido,
-        email: turno.paciente_email,
-        telefono: turno.paciente_telefono
-      } : undefined,
-      nutricionista: turno.nutricionista_nombre ? {
-        id: turno.nutricionista_id,
-        nombre: turno.nutricionista_nombre,
-        apellido: turno.nutricionista_apellido,
-        matricula: turno.nutricionista_matricula,
-        especialidades: JSON.parse(turno.nutricionista_especialidades || '[]'),
-        modalidad: JSON.parse(turno.nutricionista_modalidad || '[]'),
-        rating: parseFloat(turno.nutricionista_rating),
-        foto: turno.nutricionista_foto
-      } : undefined
+      paciente: turno.paciente_nombre
+        ? {
+            id: turno.paciente_id,
+            nombre: turno.paciente_nombre,
+            apellido: turno.paciente_apellido,
+            email: turno.paciente_email,
+            telefono: turno.paciente_telefono,
+          }
+        : undefined,
+      nutricionista: turno.nutricionista_nombre
+        ? {
+            id: turno.nutricionista_id,
+            nombre: turno.nutricionista_nombre,
+            apellido: turno.nutricionista_apellido,
+            matricula: turno.nutricionista_matricula,
+            especialidades: JSON.parse(
+              turno.nutricionista_especialidades || "[]"
+            ),
+            modalidad: JSON.parse(turno.nutricionista_modalidad || "[]"),
+            rating: parseFloat(turno.nutricionista_rating),
+            foto: turno.nutricionista_foto,
+          }
+        : undefined,
     };
   }
 }

@@ -1,19 +1,19 @@
-const express = require('express');
-const multer = require('multer');
-const NutricionistaController = require('../controllers/NutricionistaController');
-const { authMiddleware, optionalAuth } = require('../middleware/auth');
-const { validateParams, validateQuery } = require('../validators/validator');
-const { nutricionistaSchemas } = require('../validators/schemas');
+const express = require("express");
+const multer = require("multer");
+const NutricionistaController = require("../controllers/NutricionistaController");
+const { authMiddleware, optionalAuth } = require("../middleware/auth");
+const { validateParams, validateQuery } = require("../validators/validator");
+const { nutricionistaSchemas } = require("../validators/schemas");
 
 const router = express.Router();
 const nutricionistaController = new NutricionistaController();
 
 // Configuración de multer para uploads (si es necesario en el futuro)
 const upload = multer({
-  dest: 'uploads/temp/',
+  dest: "uploads/temp/",
   limits: {
-    fileSize: parseInt(process.env.UPLOAD_MAX_SIZE) || 10485760 // 10MB
-  }
+    fileSize: parseInt(process.env.UPLOAD_MAX_SIZE) || 10485760, // 10MB
+  },
 });
 
 /**
@@ -69,7 +69,8 @@ const upload = multer({
  *       500:
  *         description: Error interno del servidor
  */
-router.get('/',
+router.get(
+  "/",
   authMiddleware,
   validateQuery(nutricionistaSchemas.buscarNutricionistas.query),
   nutricionistaController.buscarNutricionistas.bind(nutricionistaController)
@@ -103,10 +104,13 @@ router.get('/',
  *       500:
  *         description: Error interno del servidor
  */
-router.get('/:id',
+router.get(
+  "/:id",
   authMiddleware,
   validateParams(nutricionistaSchemas.obtenerPerfilNutricionista.params),
-  nutricionistaController.obtenerPerfilNutricionista.bind(nutricionistaController)
+  nutricionistaController.obtenerPerfilNutricionista.bind(
+    nutricionistaController
+  )
 );
 
 /**
@@ -149,7 +153,8 @@ router.get('/:id',
  *       500:
  *         description: Error interno del servidor
  */
-router.get('/:id/disponibilidad',
+router.get(
+  "/:id/disponibilidad",
   authMiddleware,
   validateParams(nutricionistaSchemas.obtenerPerfilNutricionista.params),
   nutricionistaController.verificarDisponibilidad.bind(nutricionistaController)
@@ -189,7 +194,8 @@ router.get('/:id/disponibilidad',
  *       500:
  *         description: Error interno del servidor
  */
-router.get('/:id/horarios',
+router.get(
+  "/:id/horarios",
   authMiddleware,
   validateParams(nutricionistaSchemas.obtenerPerfilNutricionista.params),
   nutricionistaController.obtenerHorariosAtencion.bind(nutricionistaController)
