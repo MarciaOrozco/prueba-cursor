@@ -1,0 +1,1120 @@
+openapi: 3.1.0
+info:
+  title: Nutrito - CORE 1 API
+  description: |
+    API para la gestión de consultas nutricionales - CORE 1
+
+    Esta API permite a los pacientes:
+    - Buscar y visualizar nutricionistas
+    - Agendar turnos con profesionales
+    - Gestionar documentos previos
+    - Vincularse automáticamente con nutricionistas
+
+    Basado en el modelo Cliente/Servidor de Tres Capas con autenticación JWT.
+  version: 1.0.0
+  contact:
+    name: Equipo Nutrito
+    email: api@nutrito.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.nutrito.com/v1
+    description: Servidor de producción
+  - url: https://staging-api.nutrito.com/v1
+    description: Servidor de staging
+  - url: http://localhost:3000/v1
+    description: Servidor de desarrollo
+
+security:
+  - BearerAuth: []
+
+paths:
+  /nutricionistas:
+    get:
+      tags:
+        - Nutricionistas
+      summary: Buscar nutricionistas
+      description: |
+        Busca nutricionistas aplicando filtros opcionales por nombre, especialidad, modalidad o enfoque.
+        Permite refinamiento de búsqueda con múltiples criterios.
+      operationId: buscarNutricionistas
+      parameters:
+        - name: nombre
+          in: query
+          description: Filtrar por nombre del nutricionista
+          schema:
+            type: string
+            minLength: 2
+        - name: especialidad
+          in: query
+          description: Filtrar por especialidad
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                [
+                  nutricion_clinica,
+                  nutricion_deportiva,
+                  nutricion_pediatrica,
+                  obesidad,
+                  diabetes,
+                  celiaquia,
+                  vegetarianismo,
+                ]
+        - name: modalidad
+          in: query
+          description: Filtrar por modalidad de atención
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [presencial, virtual, mixta]
+        - name: rating_min
+          in: query
+          description: Rating mínimo del nutricionista
+          schema:
+            type: number
+            minimum: 1
+            maximum: 5
+        - name: limit
+          in: query
+          description: Número máximo de resultados
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Número de resultados a omitir para paginación
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Lista de nutricionistas encontrados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/NutricionistaResumen"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /nutricionistas/{id}:
+    get:
+      tags:
+        - Nutricionistas
+      summary: Obtener perfil detallado del nutricionista
+      description: |
+        Obtiene información detallada del nutricionista incluyendo formación, experiencia, reseñas y disponibilidad.
+      operationId: obtenerPerfilNutricionista
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID único del nutricionista
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Perfil completo del nutricionista
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/PerfilNutricionista"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /turnos:
+    post:
+      tags:
+        - Turnos
+      summary: Agendar nuevo turno
+      description: |
+        Crea un nuevo turno vinculando paciente con nutricionista.
+        Valida disponibilidad y genera notificaciones automáticas.
+      operationId: agendarTurno
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TurnoCrear"
+      responses:
+        "201":
+          description: Turno creado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Turno"
+                  message:
+                    type: string
+                    example: "Turno agendado exitosamente. Se ha enviado una confirmación por email."
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: Conflicto - Turno no disponible
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /turnos/{id}:
+    get:
+      tags:
+        - Turnos
+      summary: Obtener detalles del turno
+      description: Obtiene información detallada de un turno específico
+      operationId: obtenerTurno
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID único del turno
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Detalles del turno
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Turno"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /turnos/{id}/cancelar:
+    patch:
+      tags:
+        - Turnos
+      summary: Cancelar turno
+      description: |
+        Cancela un turno existente. El turno debe estar en estado 'confirmado' o 'pendiente'.
+        Genera notificaciones automáticas a las partes involucradas.
+      operationId: cancelarTurno
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID único del turno
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                motivo:
+                  type: string
+                  description: Motivo de la cancelación
+                  example: "Cambio de planes"
+                notificar_nutricionista:
+                  type: boolean
+                  description: Si se debe notificar al nutricionista
+                  default: true
+              required:
+                - motivo
+      responses:
+        "200":
+          description: Turno cancelado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Turno"
+                  message:
+                    type: string
+                    example: "Turno cancelado exitosamente"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Conflicto - Turno no puede ser cancelado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /turnos/{id}/reprogramar:
+    patch:
+      tags:
+        - Turnos
+      summary: Reprogramar turno
+      description: |
+        Reprograma un turno existente a una nueva fecha y hora.
+        Valida disponibilidad del nutricionista en el nuevo horario.
+      operationId: reprogramarTurno
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID único del turno
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fecha:
+                  type: string
+                  format: date
+                  description: Nueva fecha del turno
+                  example: "2024-03-15"
+                hora:
+                  type: string
+                  format: time
+                  description: Nueva hora del turno
+                  example: "14:30"
+                modalidad:
+                  type: string
+                  enum: [presencial, virtual, mixta]
+                  description: Modalidad del turno
+                  example: "virtual"
+              required:
+                - fecha
+                - hora
+      responses:
+        "200":
+          description: Turno reprogramado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Turno"
+                  message:
+                    type: string
+                    example: "Turno reprogramado exitosamente"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Conflicto - Nuevo horario no disponible
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /turnos/{id}/documentos:
+    post:
+      tags:
+        - Documentos
+      summary: Adjuntar documento al turno
+      description: |
+        Permite al paciente adjuntar documentos previos (análisis, estudios) al turno.
+        Los documentos quedan disponibles para el nutricionista antes de la consulta.
+      operationId: adjuntarDocumento
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID único del turno
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                archivo:
+                  type: string
+                  format: binary
+                  description: Archivo a adjuntar (PDF, JPG, PNG)
+                nombre:
+                  type: string
+                  description: Nombre descriptivo del documento
+                  example: "Análisis de sangre - Marzo 2024"
+                tipo:
+                  type: string
+                  enum:
+                    [analisis_sangre, estudios_imagen, informe_medico, otros]
+                  description: Tipo de documento
+                  example: "analisis_sangre"
+              required:
+                - archivo
+                - nombre
+                - tipo
+      responses:
+        "201":
+          description: Documento adjuntado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Documento"
+                  message:
+                    type: string
+                    example: "Documento adjuntado exitosamente"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "413":
+          description: Archivo demasiado grande
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    get:
+      tags:
+        - Documentos
+      summary: Obtener documentos del turno
+      description: Obtiene todos los documentos adjuntos a un turno específico
+      operationId: obtenerDocumentosTurno
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID único del turno
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Lista de documentos del turno
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Documento"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /pacientes/{id}/turnos:
+    get:
+      tags:
+        - Pacientes
+      summary: Obtener turnos del paciente
+      description: Obtiene todos los turnos de un paciente específico
+      operationId: obtenerTurnosPaciente
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID único del paciente
+          schema:
+            type: string
+            format: uuid
+        - name: estado
+          in: query
+          description: Filtrar por estado del turno
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [pendiente, confirmado, cancelado, completado, reprogramado]
+        - name: limit
+          in: query
+          description: Número máximo de resultados
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Número de resultados a omitir para paginación
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Lista de turnos del paciente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Turno"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Autenticación JWT. Incluir el token en el header Authorization.
+        Ejemplo: Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+  schemas:
+    Paciente:
+      type: object
+      description: Información del paciente
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID único del paciente
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        nombre:
+          type: string
+          description: Nombre del paciente
+          example: "María"
+        apellido:
+          type: string
+          description: Apellido del paciente
+          example: "García"
+        email:
+          type: string
+          format: email
+          description: Email del paciente
+          example: "maria.garcia@email.com"
+        telefono:
+          type: string
+          description: Teléfono del paciente
+          example: "+54 9 11 1234-5678"
+        fechaRegistro:
+          type: string
+          format: date-time
+          description: Fecha de registro en la plataforma
+          example: "2024-01-15T10:30:00Z"
+      required:
+        - id
+        - nombre
+        - apellido
+        - email
+
+    Nutricionista:
+      type: object
+      description: Información del nutricionista
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID único del nutricionista
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        nombre:
+          type: string
+          description: Nombre del nutricionista
+          example: "Dr. Carlos"
+        apellido:
+          type: string
+          description: Apellido del nutricionista
+          example: "Rodríguez"
+        matricula:
+          type: string
+          description: Matrícula profesional
+          example: "MN 12345"
+        especialidades:
+          type: array
+          items:
+            type: string
+            enum:
+              [
+                nutricion_clinica,
+                nutricion_deportiva,
+                nutricion_pediatrica,
+                obesidad,
+                diabetes,
+                celiaquia,
+                vegetarianismo,
+              ]
+          description: Especialidades del nutricionista
+          example: ["nutricion_clinica", "obesidad"]
+        modalidad:
+          type: array
+          items:
+            type: string
+            enum: [presencial, virtual, mixta]
+          description: Modalidades de atención
+          example: ["presencial", "virtual"]
+        rating:
+          type: number
+          minimum: 1
+          maximum: 5
+          description: Calificación promedio del nutricionista
+          example: 4.8
+        totalResenas:
+          type: integer
+          minimum: 0
+          description: Número total de reseñas
+          example: 156
+        foto:
+          type: string
+          format: uri
+          description: URL de la foto del nutricionista
+          example: "https://nutrito.com/fotos/carlos-rodriguez.jpg"
+      required:
+        - id
+        - nombre
+        - apellido
+        - matricula
+        - especialidades
+        - modalidad
+
+    NutricionistaResumen:
+      type: object
+      description: Resumen del nutricionista para listados
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        nombre:
+          type: string
+          example: "Dr. Carlos"
+        apellido:
+          type: string
+          example: "Rodríguez"
+        matricula:
+          type: string
+          example: "MN 12345"
+        especialidades:
+          type: array
+          items:
+            type: string
+          example: ["nutricion_clinica", "obesidad"]
+        modalidad:
+          type: array
+          items:
+            type: string
+          example: ["presencial", "virtual"]
+        rating:
+          type: number
+          example: 4.8
+        totalResenas:
+          type: integer
+          example: 156
+        foto:
+          type: string
+          format: uri
+          example: "https://nutrito.com/fotos/carlos-rodriguez.jpg"
+
+    PerfilNutricionista:
+      allOf:
+        - $ref: "#/components/schemas/Nutricionista"
+        - type: object
+          properties:
+            formacion:
+              type: array
+              items:
+                type: object
+                properties:
+                  titulo:
+                    type: string
+                    example: "Licenciado en Nutrición"
+                  institucion:
+                    type: string
+                    example: "Universidad de Buenos Aires"
+                  año:
+                    type: integer
+                    example: 2015
+              description: Formación académica del nutricionista
+            experiencia:
+              type: string
+              description: Años de experiencia
+              example: "8 años de experiencia en nutrición clínica"
+            descripcion:
+              type: string
+              description: Descripción profesional
+              example: "Especialista en nutrición clínica con enfoque en obesidad y diabetes"
+            horariosAtencion:
+              type: array
+              items:
+                type: object
+                properties:
+                  dia:
+                    type: string
+                    enum:
+                      [
+                        lunes,
+                        martes,
+                        miercoles,
+                        jueves,
+                        viernes,
+                        sabado,
+                        domingo,
+                      ]
+                  horaInicio:
+                    type: string
+                    format: time
+                  horaFin:
+                    type: string
+                    format: time
+              description: Horarios de atención disponibles
+            reseñas:
+              type: array
+              items:
+                $ref: "#/components/schemas/Resena"
+              description: Últimas reseñas del nutricionista
+
+    Resena:
+      type: object
+      description: Reseña de un paciente sobre un nutricionista
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        pacienteNombre:
+          type: string
+          example: "María G."
+          description: Nombre del paciente (anonimizado)
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        comentario:
+          type: string
+          example: "Excelente profesional, muy claro en sus explicaciones"
+        fecha:
+          type: string
+          format: date
+          example: "2024-01-10"
+      required:
+        - id
+        - rating
+        - comentario
+        - fecha
+
+    Turno:
+      type: object
+      description: Información del turno
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID único del turno
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        pacienteId:
+          type: string
+          format: uuid
+          description: ID del paciente
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        nutricionistaId:
+          type: string
+          format: uuid
+          description: ID del nutricionista
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        fecha:
+          type: string
+          format: date
+          description: Fecha del turno
+          example: "2024-03-15"
+        hora:
+          type: string
+          format: time
+          description: Hora del turno
+          example: "14:30"
+        modalidad:
+          type: string
+          enum: [presencial, virtual, mixta]
+          description: Modalidad del turno
+          example: "virtual"
+        estado:
+          type: string
+          enum: [pendiente, confirmado, cancelado, completado, reprogramado]
+          description: Estado actual del turno
+          example: "confirmado"
+        metodoPago:
+          type: string
+          enum:
+            [
+              efectivo,
+              transferencia,
+              tarjeta_credito,
+              tarjeta_debito,
+              mercado_pago,
+            ]
+          description: Método de pago seleccionado
+          example: "mercado_pago"
+        fechaCreacion:
+          type: string
+          format: date-time
+          description: Fecha de creación del turno
+          example: "2024-01-20T15:30:00Z"
+        fechaModificacion:
+          type: string
+          format: date-time
+          description: Fecha de última modificación
+          example: "2024-01-20T15:30:00Z"
+        paciente:
+          $ref: "#/components/schemas/Paciente"
+        nutricionista:
+          $ref: "#/components/schemas/NutricionistaResumen"
+      required:
+        - id
+        - pacienteId
+        - nutricionistaId
+        - fecha
+        - hora
+        - modalidad
+        - estado
+
+    TurnoCrear:
+      type: object
+      description: Datos para crear un nuevo turno
+      properties:
+        nutricionistaId:
+          type: string
+          format: uuid
+          description: ID del nutricionista
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        fecha:
+          type: string
+          format: date
+          description: Fecha del turno
+          example: "2024-03-15"
+        hora:
+          type: string
+          format: time
+          description: Hora del turno
+          example: "14:30"
+        modalidad:
+          type: string
+          enum: [presencial, virtual, mixta]
+          description: Modalidad del turno
+          example: "virtual"
+        metodoPago:
+          type: string
+          enum:
+            [
+              efectivo,
+              transferencia,
+              tarjeta_credito,
+              tarjeta_debito,
+              mercado_pago,
+            ]
+          description: Método de pago
+          example: "mercado_pago"
+        motivo:
+          type: string
+          description: Motivo de la consulta
+          example: "Consulta inicial para plan de alimentación"
+          maxLength: 500
+      required:
+        - nutricionistaId
+        - fecha
+        - hora
+        - modalidad
+        - metodoPago
+
+    VinculoPacienteNutricionista:
+      type: object
+      description: Vínculo entre paciente y nutricionista
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID único del vínculo
+          example: "550e8400-e29b-41d4-a716-446655440004"
+        pacienteId:
+          type: string
+          format: uuid
+          description: ID del paciente
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        nutricionistaId:
+          type: string
+          format: uuid
+          description: ID del nutricionista
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        fechaInicio:
+          type: string
+          format: date-time
+          description: Fecha de inicio del vínculo
+          example: "2024-01-20T15:30:00Z"
+        activo:
+          type: boolean
+          description: Si el vínculo está activo
+          example: true
+        paciente:
+          $ref: "#/components/schemas/Paciente"
+        nutricionista:
+          $ref: "#/components/schemas/NutricionistaResumen"
+      required:
+        - id
+        - pacienteId
+        - nutricionistaId
+        - fechaInicio
+        - activo
+
+    Documento:
+      type: object
+      description: Documento adjunto a un turno
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID único del documento
+          example: "550e8400-e29b-41d4-a716-446655440005"
+        pacienteId:
+          type: string
+          format: uuid
+          description: ID del paciente
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        turnoId:
+          type: string
+          format: uuid
+          description: ID del turno (opcional)
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        nombreArchivo:
+          type: string
+          description: Nombre original del archivo
+          example: "analisis_sangre_marzo2024.pdf"
+        nombre:
+          type: string
+          description: Nombre descriptivo del documento
+          example: "Análisis de sangre - Marzo 2024"
+        url:
+          type: string
+          format: uri
+          description: URL para acceder al documento
+          example: "https://nutrito.com/documentos/550e8400-e29b-41d4-a716-446655440005"
+        tipo:
+          type: string
+          enum: [analisis_sangre, estudios_imagen, informe_medico, otros]
+          description: Tipo de documento
+          example: "analisis_sangre"
+        tamaño:
+          type: integer
+          description: Tamaño del archivo en bytes
+          example: 1048576
+        fechaCarga:
+          type: string
+          format: date-time
+          description: Fecha de carga del documento
+          example: "2024-01-20T16:00:00Z"
+      required:
+        - id
+        - pacienteId
+        - nombreArchivo
+        - nombre
+        - url
+        - tipo
+        - fechaCarga
+
+    Pagination:
+      type: object
+      description: Información de paginación
+      properties:
+        total:
+          type: integer
+          description: Número total de elementos
+          example: 150
+        limit:
+          type: integer
+          description: Límite de elementos por página
+          example: 20
+        offset:
+          type: integer
+          description: Número de elementos omitidos
+          example: 0
+        hasNext:
+          type: boolean
+          description: Si hay más páginas disponibles
+          example: true
+        hasPrev:
+          type: boolean
+          description: Si hay páginas anteriores
+          example: false
+      required:
+        - total
+        - limit
+        - offset
+        - hasNext
+        - hasPrev
+
+    ErrorResponse:
+      type: object
+      description: Respuesta de error estándar
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Código de error
+              example: "VALIDATION_ERROR"
+            message:
+              type: string
+              description: Mensaje de error
+              example: "Los datos proporcionados no son válidos"
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                    example: "fecha"
+                  message:
+                    type: string
+                    example: "La fecha debe ser futura"
+              description: Detalles específicos del error
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp del error
+          example: "2024-01-20T15:30:00Z"
+        path:
+          type: string
+          description: Ruta donde ocurrió el error
+          example: "/v1/turnos"
+      required:
+        - error
+        - timestamp
+        - path
+
+  responses:
+    BadRequest:
+      description: Solicitud inválida
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: "VALIDATION_ERROR"
+              message: "Los datos proporcionados no son válidos"
+              details:
+                - field: "fecha"
+                  message: "La fecha debe ser futura"
+            timestamp: "2024-01-20T15:30:00Z"
+            path: "/v1/turnos"
+
+    Unauthorized:
+      description: No autorizado - Token JWT inválido o faltante
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: "UNAUTHORIZED"
+              message: "Token de autenticación requerido"
+            timestamp: "2024-01-20T15:30:00Z"
+            path: "/v1/turnos"
+
+    NotFound:
+      description: Recurso no encontrado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: "NOT_FOUND"
+              message: "El recurso solicitado no fue encontrado"
+            timestamp: "2024-01-20T15:30:00Z"
+            path: "/v1/turnos/550e8400-e29b-41d4-a716-446655440003"
+
+    InternalServerError:
+      description: Error interno del servidor
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: "INTERNAL_ERROR"
+              message: "Error interno del servidor"
+            timestamp: "2024-01-20T15:30:00Z"
+            path: "/v1/turnos"
+
+tags:
+  - name: Nutricionistas
+    description: Operaciones relacionadas con nutricionistas
+  - name: Turnos
+    description: Gestión de turnos y consultas
+  - name: Documentos
+    description: Gestión de documentos adjuntos
+  - name: Pacientes
+    description: Operaciones relacionadas con pacientes
